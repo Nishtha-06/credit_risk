@@ -5,5 +5,4 @@ numpy
 scikit-learn==1.6.1
 joblib
 pydantic
-# If your pipeline uses XGBoost / LightGBM / CatBoost, add it here too.
-# IMPORTANT: pin scikit-learn (and pandas/numpy) to the exact versions you trained with, e.g. scikit-learn==1.5.2
+xgboost
