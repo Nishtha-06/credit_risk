@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loan default risk check</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="intro">
+      <h1>Loan default risk check</h1>
+      <p>Enter an application and the model estimates how likely the borrower is to default.</p>
+    </header>
+
+    <div class="layout">
+      <form id="loan-form" class="sheet" novalidate>
+        <fieldset>
+          <legend>The borrower</legend>
+          <div class="grid">
+            <label class="field">
+              <span>Age</span>
+              <input type="number" name="person_age" min="18" max="100" step="1" placeholder="29" required>
+            </label>
+            <label class="field">
+              <span>Annual income</span>
+              <input type="number" name="person_income" min="1" step="any" placeholder="65000" required>
+            </label>
+            <label class="field">
+              <span>Home ownership</span>
+              <select name="person_home_ownership" required>
+                <option value="" disabled selected>Choose one</option>
+                <option value="RENT">Rent</option>
+                <option value="OWN">Own</option>
+                <option value="MORTGAGE">Mortgage</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Years employed</span>
+              <input type="number" name="person_emp_length" min="0" max="60" step="any" placeholder="4" required>
+            </label>
+            <label class="field">
+              <span>Credit history (years)</span>
+              <input type="number" name="cb_person_cred_hist_length" min="0" max="60" step="1" placeholder="6" required>
+            </label>
+            <div class="field">
+              <span id="default-label">Has defaulted before</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="default-label">
+                <input type="radio" id="def-n" name="cb_person_default_on_file" value="N" checked>
+                <label for="def-n">No</label>
+                <input type="radio" id="def-y" name="cb_person_default_on_file" value="Y">
+                <label for="def-y">Yes</label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>The loan</legend>
+          <div class="grid">
+            <label class="field">
+              <span>Purpose</span>
+              <select name="loan_intent" required>
+                <option value="" disabled selected>Choose one</option>
+                <option value="PERSONAL">Personal</option>
+                <option value="EDUCATION">Education</option>
+                <option value="MEDICAL">Medical</option>
+                <option value="VENTURE">Business venture</option>
+                <option value="HOMEIMPROVEMENT">Home improvement</option>
+                <option value="DEBTCONSOLIDATION">Debt consolidation</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Loan amount</span>
+              <input type="number" name="loan_amnt" min="1" step="any" placeholder="12000" required>
+            </label>
+
+            <div class="field wide">
+              <span id="grade-label">Loan grade</span>
+              <div class="grades" role="radiogroup" aria-labelledby="grade-label">
+                <input type="radio" id="g-a" name="loan_grade" value="A" required><label for="g-a">A</label>
+                <input type="radio" id="g-b" name="loan_grade" value="B"><label for="g-b">B</label>
+                <input type="radio" id="g-c" name="loan_grade" value="C"><label for="g-c">C</label>
+                <input type="radio" id="g-d" name="loan_grade" value="D"><label for="g-d">D</label>
+                <input type="radio" id="g-e" name="loan_grade" value="E"><label for="g-e">E</label>
+                <input type="radio" id="g-f" name="loan_grade" value="F"><label for="g-f">F</label>
+                <input type="radio" id="g-g" name="loan_grade" value="G"><label for="g-g">G</label>
+              </div>
+            </div>
+
+            <div class="field wide">
+              <div class="row-between">
+                <label for="rate">Interest rate</label>
+                <output id="rate-out">11.0%</output>
+              </div>
+              <input type="range" id="rate" name="loan_int_rate" min="5" max="25" step="0.1" value="11">
+            </div>
+          </div>
+          <p class="derived" id="lti-note">Loan-to-income ratio is worked out for you once you enter income and amount.</p>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" id="submit">
+            <span class="btn-label">Check risk</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <button type="reset" id="reset" class="ghost">Clear form</button>
+        </div>
+        <p id="error" class="error" role="alert" hidden></p>
+      </form>
+
+      <aside id="result" class="panel" data-state="idle" aria-live="polite">
+        <svg class="dial" viewBox="0 0 240 140" role="img" aria-label="Default probability dial">
+          <path class="dial-track" d="M20 120 A100 100 0 0 1 220 120"/>
+          <path id="dial-fill" class="dial-fill" d="M20 120 A100 100 0 0 1 220 120"/>
+          <line id="dial-tick" class="dial-tick" x1="0" y1="0" x2="0" y2="0"/>
+        </svg>
+        <div class="readout">
+          <div class="pct"><span id="pct">--</span><small>%</small></div>
+          <div class="verdict" id="verdict">No result yet</div>
+        </div>
+        <p class="summary" id="summary">Fill in the form and run the check. The dial shows the estimated chance of default, and the marker shows the model's cut-off.</p>
+        <dl class="stats">
+          <div><dt>Cut-off</dt><dd id="stat-threshold">--</dd></div>
+          <div><dt>Loan-to-income</dt><dd id="stat-lti">--</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </main>
+  <script src="/static/script.js"></script>
+</body>
+</html>
